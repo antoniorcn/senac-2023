@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
@@ -83,27 +85,46 @@ class _TelaPrincipal extends State<TelaPrincipal> {
   }
 
   void salvar() async {
+    print("Botão Salvar acionado");
     var client = http.Client();
     try {
-      var uri = Uri.https(
-          "fds-senac-mobile-default-rtdb.firebaseio.com", "contatos.json");
-
-      print("URI: " + uri.origin);
-      var response = await client.post(uri, body: {"nome": nomeController.text,
-        "telefone": telefoneController.text,
-        "email": emailController.text});
+      var response = await client.post(
+          Uri.https('fds-senac-mobile-default-rtdb.firebaseio.com', 'contatos.json'),
+          body: {
+            "nome": nomeController.text,
+            "telefone": telefoneController.text,
+            "email": emailController.text
+          }
+      );
       print(response.body);
     } finally {
       client.close();
     }
   }
 
-  void lerTodos() async {
+  void lerDados() async {
+    print("Botão lerDados acionado");
     var client = http.Client();
-    var uri = Uri.https("fds-senac-mobile-default-rtdb.firebaseio.com", "contatos.json");
-    var response = await client.get( uri );
-    print("Texto do Body: " + response.body);
+    try {
+      var response = await client.get(
+        Uri.https('fds-senac-mobile-default-rtdb.firebaseio.com', 'contatos.json'),
+      );
+      var decodedResponse = jsonDecode(utf8.decode(response.bodyBytes)) as Map;
+      // print("Body: ${response.body}");
+      print("Body ***: ${decodedResponse.keys}");
+      contatos.clear();
+      for(var key in decodedResponse.keys) {
+        print("Lendo a Key: $key");
+        var item = decodedResponse[key];
+        print("Lendo o Item: $item");
 
+        var contato = Contato(item["nome"], item["telefone"], item["email"]);
+        print("Decodificando o contato: $contato");
+        contatos.add(contato);
+      }
+    } finally {
+      client.close();
+    }
   }
 
   Widget listagem() {
